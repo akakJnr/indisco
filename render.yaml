@@ -1,33 +1,30 @@
-# Render Blueprint for R'Indisco Supermarket.
-# Creates Postgres, Redis (Key Value), the Medusa backend and the storefront.
+# Render Blueprint for R'Indisco Supermarket: FREE DEMO setup.
+# Everything below uses Render's free plans, so it costs nothing.
 # Values marked `sync: false` are secrets or addresses you type into Render;
 # nothing secret is stored in this repository. See DEPLOY.md.
 #
-# All services share one region so they can talk over Render's private network
-# (fast). Frankfurt is the closest Render region to Nigeria.
+# Free-plan limits to know about (details in DEPLOY.md):
+#  - Web services fall asleep after ~15 minutes without visitors; the next
+#    visit waits roughly a minute while they wake up.
+#  - The free Postgres database is deleted after 30 days.
+#  - Web services have 512 MB of memory, which is tight for Medusa.
+#  - No Redis: events and workflows run in memory (fine for a demo, not for
+#    production). Setting REDIS_URL turns the Redis modules on.
 
 databases:
   - name: indisco-db
-    region: frankfurt
-    plan: basic-256mb # paid; Render's free Postgres expires after 30 days
+    region: frankfurt # all services share a region so they use the private network
+    plan: free
     postgresMajorVersion: "18" # use "17" if 18 is not offered yet
     ipAllowList: [] # private network only; add your IP temporarily to restore data
 
 services:
-  # Redis: events, workflows, locks and sessions in production.
-  - type: keyvalue
-    name: indisco-redis
-    region: frankfurt
-    plan: starter
-    maxmemoryPolicy: noeviction # required by the job queues
-    ipAllowList: [] # private network only
-
   # Medusa backend and admin dashboard (the admin is served at /app).
   - type: web
     name: indisco-backend
     runtime: node
     region: frankfurt
-    plan: starter # always on; free web services sleep, which breaks emails and webhooks
+    plan: free
     healthCheckPath: /health
     buildCommand: >-
       npm ci &&
@@ -44,14 +41,12 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      # Keeps Node inside the free plan's 512 MB.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384
       - key: DATABASE_URL
         fromDatabase:
           name: indisco-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: indisco-redis
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -85,7 +80,7 @@ services:
     name: indisco-storefront
     runtime: node
     region: frankfurt
-    plan: starter
+    plan: free
     buildCommand: npm ci && npm run build --workspace=@dtc/storefront
     startCommand: cd apps/storefront && npx next start -p $PORT
     envVars:

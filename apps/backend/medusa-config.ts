@@ -70,6 +70,9 @@ const useRedis = process.env.NODE_ENV === "production" && !!redisUrl
 
 module.exports = defineConfig({
   admin: {
+    // Set DISABLE_MEDUSA_ADMIN=true to skip building and serving the admin
+    // dashboard. Useful on hosts with very little memory (the free Render plan).
+    disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
     // The public address of this backend. Optional: the admin is served by the
     // backend itself, so it falls back to the browser's own address.
     backendUrl: process.env.MEDUSA_BACKEND_URL,
