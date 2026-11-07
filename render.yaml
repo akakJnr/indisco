@@ -1,0 +1,104 @@
+# Render Blueprint for R'Indisco Supermarket.
+# Creates Postgres, Redis (Key Value), the Medusa backend and the storefront.
+# Values marked `sync: false` are secrets or addresses you type into Render;
+# nothing secret is stored in this repository. See DEPLOY.md.
+#
+# All services share one region so they can talk over Render's private network
+# (fast). Frankfurt is the closest Render region to Nigeria.
+
+databases:
+  - name: indisco-db
+    region: frankfurt
+    plan: basic-256mb # paid; Render's free Postgres expires after 30 days
+    postgresMajorVersion: "18" # use "17" if 18 is not offered yet
+    ipAllowList: [] # private network only; add your IP temporarily to restore data
+
+services:
+  # Redis: events, workflows, locks and sessions in production.
+  - type: keyvalue
+    name: indisco-redis
+    region: frankfurt
+    plan: starter
+    maxmemoryPolicy: noeviction # required by the job queues
+    ipAllowList: [] # private network only
+
+  # Medusa backend and admin dashboard (the admin is served at /app).
+  - type: web
+    name: indisco-backend
+    runtime: node
+    region: frankfurt
+    plan: starter # always on; free web services sleep, which breaks emails and webhooks
+    healthCheckPath: /health
+    buildCommand: >-
+      npm ci &&
+      npm run build --workspace=@dtc/backend &&
+      cd apps/backend/.medusa/server &&
+      npm install
+    # Applies database migrations, then starts the server.
+    startCommand: >-
+      cd apps/backend/.medusa/server &&
+      npx medusa db:migrate &&
+      npx medusa start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: indisco-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: indisco-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+      # Addresses, typed in after the services exist (see DEPLOY.md step 4).
+      - key: STORE_CORS
+        sync: false
+      - key: ADMIN_CORS
+        sync: false
+      - key: AUTH_CORS
+        sync: false
+      # Third-party keys.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_REPLY_TO
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # Next.js storefront.
+  - type: web
+    name: indisco-storefront
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npm run build --workspace=@dtc/storefront
+    startCommand: cd apps/storefront && npx next start -p $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_DEFAULT_REGION
+        value: ng
+      # NEXT_PUBLIC_* values are baked in at build time: change one, redeploy.
+      - key: NEXT_PUBLIC_MEDUSA_BACKEND_URL
+        sync: false
+      - key: NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_BASE_URL
+        sync: false

@@ -63,8 +63,16 @@ const indiscoAdminBranding = () => {
   }
 }
 
+// Production runs on Redis (events, workflows, locks, sessions). In development
+// Medusa falls back to in-memory versions, so no Redis is needed locally.
+const redisUrl = process.env.REDIS_URL
+const useRedis = process.env.NODE_ENV === "production" && !!redisUrl
+
 module.exports = defineConfig({
   admin: {
+    // The public address of this backend. Optional: the admin is served by the
+    // backend itself, so it falls back to the browser's own address.
+    backendUrl: process.env.MEDUSA_BACKEND_URL,
     // Medusa merges what this returns into its own Vite config, so return
     // only the additions. Returning the whole config duplicates its plugins.
     vite: () => ({
@@ -73,6 +81,16 @@ module.exports = defineConfig({
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: useRedis ? redisUrl : undefined,
+    // Hosted Postgres reached over the public internet needs SSL; set
+    // DATABASE_SSL=true for that. Private-network URLs do not need it.
+    ...(process.env.DATABASE_SSL === "true"
+      ? {
+          databaseDriverOptions: {
+            connection: { ssl: { rejectUnauthorized: false } },
+          },
+        }
+      : {}),
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -92,6 +110,31 @@ module.exports = defineConfig({
     }
   },
   modules: [
+    ...(useRedis
+      ? [
+          {
+            resolve: "@medusajs/medusa/event-bus-redis",
+            options: { redisUrl },
+          },
+          {
+            resolve: "@medusajs/medusa/workflow-engine-redis",
+            options: { redis: { redisUrl } },
+          },
+          {
+            resolve: "@medusajs/medusa/locking",
+            options: {
+              providers: [
+                {
+                  resolve: "@medusajs/medusa/locking-redis",
+                  id: "locking-redis",
+                  is_default: true,
+                  options: { redisUrl },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
     {
       resolve: "./src/modules/review",
     },
