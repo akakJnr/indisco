@@ -26,22 +26,21 @@ services:
     region: frankfurt
     plan: free
     healthCheckPath: /health
+    # Build with the root lockfile and reuse those dependencies at runtime.
     buildCommand: >-
       npm ci --include=dev &&
-      npm run build --workspace=@dtc/backend &&
-      cd apps/backend/.medusa/server &&
-      npm install --legacy-peer-deps
+      NODE_OPTIONS=--max-old-space-size=2048 npm run build --workspace=@dtc/backend
     # Applies database migrations, then starts the server.
     startCommand: >-
       cd apps/backend/.medusa/server &&
-      npx medusa db:migrate &&
-      npx medusa start
+      npx --no-install medusa db:migrate &&
+      npx --no-install medusa start
     envVars:
       - key: NODE_VERSION
         value: "22"
       - key: NODE_ENV
         value: production
-      # Keeps Node inside the free plan's 512 MB.
+      # Limits the Node heap on the free runtime. The build uses its own limit.
       - key: NODE_OPTIONS
         value: --max-old-space-size=384
       - key: DATABASE_URL

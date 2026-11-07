@@ -138,7 +138,8 @@ npx medusa user -e you@yourdomain.com -p "a-strong-password"
 
 ## If something runs out of memory
 
-Medusa is memory hungry and the free plan has 512 MB.
+The free backend runtime has 512 MB. Render uses a separate build instance,
+and the backend build command in `render.yaml` sets its own Node heap limit.
 
 - **The build fails or is killed:** the admin dashboard is the heaviest part.
   On `indisco-backend` add the variable `DISABLE_MEDUSA_ADMIN=true` and
@@ -177,6 +178,19 @@ region:
    start commands and variables listed under it in `render.yaml`.
 
 Then follow steps 2 to 5 above.
+
+## If Medusa cannot find its config during the build
+
+Keep the backend service's **Root Directory** blank so Render builds from the
+repository root and uses the shared `package-lock.json`. The backend build
+command must start with `npm ci --include=dev` because Medusa needs `ts-node`
+to load `apps/backend/medusa-config.ts` while building. The backend uses
+TypeScript's transpiler for that step, so loading the config does not depend
+on SWC's native binding. Medusa still type-checks the backend during the build.
+
+After pushing changes to `render.yaml`, sync the Blueprint and redeploy the
+latest commit. For a service created manually, copy the backend build and start
+commands from `render.yaml` into **Settings > Build & Deploy** before redeploying.
 
 ## Notes
 
