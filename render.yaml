@@ -30,7 +30,7 @@ services:
       npm ci --include=dev &&
       npm run build --workspace=@dtc/backend &&
       cd apps/backend/.medusa/server &&
-      npm install
+      npm install --legacy-peer-deps
     # Applies database migrations, then starts the server.
     startCommand: >-
       cd apps/backend/.medusa/server &&
