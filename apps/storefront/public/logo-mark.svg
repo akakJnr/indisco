@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="R'Indisco Supermarket">
+  <title>R'Indisco Supermarket</title>
+  <rect width="128" height="128" rx="30" fill="#1A5490"/>
+  <g transform="translate(14 17) scale(0.84)">
+  <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 14h16l12 52"/>
+    <path d="M32 77h70"/>
+  </g>
+  <path d="M26 26h86l-10 40H36z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/>
+  <g stroke="#1A5490" stroke-width="5" stroke-linecap="round">
+    <path d="M47 34v24"/><path d="M63 34v24"/><path d="M79 34v24"/><path d="M95 34v24"/>
+  </g>
+  <circle cx="44" cy="92" r="9" fill="#F28C1E"/>
+  <circle cx="90" cy="92" r="9" fill="#F28C1E"/></g>
+</svg>
