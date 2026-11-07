@@ -68,7 +68,8 @@ emails, so keep it private and delete it when you are done).
    ```
 
 3. Remove your IP from the allow list again.
-4. Redeploy `indisco-backend`. It applies any pending migrations on start.
+4. Redeploy `indisco-backend`. It applies pending migrations on start and
+   skips the starter demo seed if the database already has a region.
 
 To make a fresh dump later (start your local database first with
 `start-dev-db.cmd`):

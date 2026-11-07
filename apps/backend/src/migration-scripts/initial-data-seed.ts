@@ -30,8 +30,19 @@ export default async function initial_data_seed({
   container: MedusaContainer;
 }) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
-  const link = container.resolve(ContainerRegistrationKeys.LINK);
   const query = container.resolve(ContainerRegistrationKeys.QUERY);
+  const { data: existingRegions } = await query.graph({
+    entity: "region",
+    fields: ["id"],
+    pagination: { take: 1 },
+  })
+
+  if (existingRegions.length) {
+    logger.info("Skipping initial demo seed because the database already has a region.")
+    return
+  }
+
+  const link = container.resolve(ContainerRegistrationKeys.LINK);
   const fulfillmentModuleService = container.resolve(
     ModuleRegistrationName.FULFILLMENT
   );
