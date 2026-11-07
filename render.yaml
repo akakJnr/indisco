@@ -27,7 +27,7 @@ services:
     plan: free
     healthCheckPath: /health
     buildCommand: >-
-      npm ci &&
+      npm ci --include=dev &&
       npm run build --workspace=@dtc/backend &&
       cd apps/backend/.medusa/server &&
       npm install
@@ -81,7 +81,7 @@ services:
     runtime: node
     region: frankfurt
     plan: free
-    buildCommand: npm ci && npm run build --workspace=@dtc/storefront
+    buildCommand: npm ci --include=dev && npm run build --workspace=@dtc/storefront
     startCommand: cd apps/storefront && npx next start -p $PORT
     envVars:
       - key: NODE_VERSION
