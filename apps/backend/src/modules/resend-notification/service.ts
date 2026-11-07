@@ -62,9 +62,10 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
     })
 
     if (error) {
+      const status = error.statusCode ? ` HTTP ${error.statusCode}` : ""
       throw new MedusaError(
         MedusaError.Types.UNEXPECTED_STATE,
-        `Resend failed to send the email: ${error.message}`
+        `Resend failed to send the email (${error.name}${status}): ${error.message}`
       )
     }
 

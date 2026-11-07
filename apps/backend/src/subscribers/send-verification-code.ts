@@ -1,5 +1,8 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { AuthWorkflowEvents } from "@medusajs/framework/utils"
+import {
+  AuthWorkflowEvents,
+  ContainerRegistrationKeys,
+} from "@medusajs/framework/utils"
 import { sendVerificationCodeWorkflow } from "../workflows/send-verification-code"
 
 type VerificationRequestedData = {
@@ -34,13 +37,17 @@ export default async function sendVerificationCodeHandler({
     })
   } catch (error) {
     // The customer can ask for a new code; never fail the sign-in request.
+    const message =
+      error !== null &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof error.message === "string"
+        ? error.message
+        : "Unknown notification error"
+
     container
-      .resolve("logger")
-      .error(
-        `Could not send the verification code email: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      )
+      .resolve(ContainerRegistrationKeys.LOGGER)
+      .error(`Could not send the verification code email: ${message}`)
   }
 }
 
